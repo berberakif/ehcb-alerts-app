@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from urllib.parse import quote
@@ -23,6 +22,7 @@ LANGUAGE_TO_REGION = {
     'Serbian (Cyrillic)': 'rs',
     'Spanish': 'es',
     'Turkish': 'tr',
+    'English': ''  # No specific region for English, hence empty string
 }
 
 # Function to generate Google Alerts URL
@@ -46,8 +46,12 @@ if uploaded_file:
     # Coach selection
     coach = st.selectbox("Select a Coach", df['Name'].unique())
 
-    # Language selection
-    languages = st.multiselect("Select Languages", df.columns[1:])
+    # Language selection with English pre-selected
+    languages = st.multiselect(
+        "Select Languages",
+        ['English'] + list(df.columns[1:]),
+        default=['English']
+    )
 
     if st.button("Generate URLs"):
         st.subheader("Generated Google Alerts URLs:")
@@ -55,7 +59,11 @@ if uploaded_file:
         # Generate URLs
         urls = []
         for language in languages:
-            search_term = df.loc[df['Name'] == coach, language].values[0]
+            if language == 'English':
+                search_term = df.loc[df['Name'] == coach, 'Name'].values[0]
+            else:
+                search_term = df.loc[df['Name'] == coach, language].values[0]
+
             region_code = LANGUAGE_TO_REGION.get(language, "")
             url = generate_alert_url(search_term, region_code)
             urls.append((language, url))
