@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 from urllib.parse import quote
@@ -29,7 +30,7 @@ LANGUAGE_TO_REGION = {
 
 def generate_alert_url(search_term, region_code=""):
     base_url = "https://www.google.com/alerts?hl=en&q="
-    return f"{base_url}{quote(search_term)}&gl={region_code}"
+    return f"{base_url}{quote(search_term)}&gl={region_code}#1:0"
 
 
 # Streamlit interface
@@ -63,8 +64,5 @@ if uploaded_file:
         for language, url in urls:
             st.markdown(f"[{language} Alert]({url})")
 
-        # Option to download the URLs as a CSV file
-        download_df = pd.DataFrame(urls, columns=['Language', 'URL'])
-        csv = download_df.to_csv(index=False)
-        st.download_button(label="Download URLs as CSV",
-                           data=csv, mime="text/csv")
+        st.write(
+            "**Note:** After opening the link, manually adjust the 'Language' and 'Region' fields as needed.")
