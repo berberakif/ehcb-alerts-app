@@ -283,26 +283,95 @@ elif page == "Dictionary Search":
 
         # Generate combinations of coach definitions and related words
         queries = []
+        news_data = {}
         for coach_term in selected_coach_terms:
             for word in selected_words:
                 for language in selected_languages:
                     if language in translations[coach_term] and language in translations[word]:
                         query = f"{translations[coach_term][language]} {translations[word][language]}"
-                        queries.append(query)
+                        queries.append((query, language))
 
         # Fetch and display news
-        for language in selected_languages:
-            for query in queries:
-                articles = fetch_news_with_google_news(query, lang=language)
+        for query, language in queries:
+            lang_code = LANGUAGE_TO_REGION.get(language, 'en')
+            articles = fetch_news_with_google_news(query, lang=lang_code)
 
-                st.write(f"**Search Query:** {query} (Language: {language})")
+            st.write(f"**Search Query:** {query} (Language: {language})")
+            if language not in news_data:
+                news_data[language] = []
+            news_data[language].extend(articles)
+
+            for article in articles:
+                st.write(f"**{article['title']}**")
+                st.write(f"{article['desc']}")
+                st.write(
+                    f"**Published Date:** {article.get('date', 'N/A')}")
+                st.write(f"[Read more]({article['link']})")
+            st.write("---")
+
+        # Generate HTML report
+        if st.button("Generate HTML Report"):
+            html_content = """
+            <html>
+            <head>
+                <title>News Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h1 { text-align: center; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                    a { color: #3498db; text-decoration: none; }
+                    a:hover { text-decoration: underline; }
+                </style>
+            </head>
+            <body>
+                <h1>News Report</h1>
+                <table>
+                    <tr>
+                        <th>Language</th>
+                        <th>Title</th>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Link</th>
+                    </tr>
+            """
+
+            for lang, articles in news_data.items():
                 for article in articles:
-                    st.write(f"**{article['title']}**")
-                    st.write(f"{article['desc']}")
-                    st.write(
-                        f"**Published Date:** {article.get('date', 'N/A')}")
-                    st.write(f"[Read more]({article['link']})")
-                st.write("---")
+                    title = article.get('title', 'N/A')
+                    date = article.get('date', 'N/A')
+                    desc = article.get('desc', 'N/A')
+                    link = article.get('link', '#')
+                    html_content += f"""
+                    <tr>
+                        <td>{lang}</td>
+                        <td>{title}</td>
+                        <td>{date}</td>
+                        <td>{desc}</td>
+                        <td><a href="{link}" target="_blank">Read more</a></td>
+                    </tr>
+                    """
+
+            html_content += """
+                </table>
+            </body>
+            </html>
+            """
+
+            output_path = "news_report.html"
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write(html_content)
+
+            st.success("HTML report generated successfully!")
+            with open(output_path, "rb") as f:
+                st.download_button(
+                    label="Download HTML Report",
+                    data=f,
+                    file_name="news_report.html",
+                    mime="text/html"
+                )
+
 
 # Page 5: Custom Search
 elif page == "Custom Search":
